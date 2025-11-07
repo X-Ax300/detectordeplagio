@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase, Profile } from '../lib/supabase';
+import {
+  User,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged
+} from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db, Profile } from '../lib/firebase';
 
 interface AuthContextType {
   user: User | null;
@@ -19,40 +26,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user);
+      if (user) {
+        await loadProfile(user.uid);
       } else {
+        setProfile(null);
         setLoading(false);
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      (() => {
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          loadProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setLoading(false);
-        }
-      })();
-    });
-
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   async function loadProfile(userId: string) {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+      const docRef = doc(db, 'profiles', userId);
+      const docSnap = await getDoc(docRef);
 
-      if (error) throw error;
-      setProfile(data);
+      if (docSnap.exists()) {
+        setProfile(docSnap.data() as Profile);
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -61,39 +55,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signUp(email: string, password: string, displayName: string) {
-    const { data, error } = await supabase.auth.signUp({
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+    const profileData: Profile = {
+      id: userCredential.user.uid,
       email,
-      password,
-    });
+      display_name: displayName,
+      has_subscription: false,
+      subscription_expires_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
 
-    if (error) throw error;
-
-    if (data.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          email,
-          display_name: displayName,
-          has_subscription: false,
-        });
-
-      if (profileError) throw profileError;
-    }
+    await setDoc(doc(db, 'profiles', userCredential.user.uid), profileData);
   }
 
   async function signIn(email: string, password: string) {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
+    await signInWithEmailAndPassword(auth, email, password);
   }
 
   async function signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    await firebaseSignOut(auth);
   }
 
   return (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Users, FileText, FileBarChart } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { collection, getCountFromServer } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface Stats {
@@ -24,16 +25,16 @@ export function Dashboard() {
 
   async function loadStats() {
     try {
-      const [usersResult, analysesResult, reportsResult] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }),
-        supabase.from('analyses').select('id', { count: 'exact', head: true }),
-        supabase.from('reports').select('id', { count: 'exact', head: true }),
+      const [usersSnapshot, analysesSnapshot, reportsSnapshot] = await Promise.all([
+        getCountFromServer(collection(db, 'profiles')),
+        getCountFromServer(collection(db, 'analyses')),
+        getCountFromServer(collection(db, 'reports')),
       ]);
 
       setStats({
-        totalUsers: usersResult.count || 0,
-        totalAnalyses: analysesResult.count || 0,
-        totalReports: reportsResult.count || 0,
+        totalUsers: usersSnapshot.data().count,
+        totalAnalyses: analysesSnapshot.data().count,
+        totalReports: reportsSnapshot.data().count,
       });
     } catch (error) {
       console.error('Error loading stats:', error);

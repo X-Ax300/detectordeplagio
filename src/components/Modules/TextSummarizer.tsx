@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileText, Sparkles } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageLimit } from '../../contexts/UsageLimitContext';
 import { UsageBanner } from '../UsageBanner';
@@ -41,15 +42,14 @@ export function TextSummarizer() {
       };
 
       if (user) {
-        const { error: insertError } = await supabase.from('analyses').insert({
-          user_id: user.id,
+        await addDoc(collection(db, 'analyses'), {
+          user_id: user.uid,
           type: 'text_summary',
           input_content: text,
           result: analysisResult,
           status: 'completed',
+          created_at: new Date().toISOString(),
         });
-
-        if (insertError) throw insertError;
       }
 
       useFeature('textSummary');

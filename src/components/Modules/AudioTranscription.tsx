@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mic, Upload, Copy, Download, CheckCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageLimit } from '../../contexts/UsageLimitContext';
 import { UsageBanner } from '../UsageBanner';
@@ -45,15 +46,14 @@ export function AudioTranscription() {
       };
 
       if (user) {
-        const { error: insertError } = await supabase.from('analyses').insert({
-          user_id: user.id,
+        await addDoc(collection(db, 'analyses'), {
+          user_id: user.uid,
           type: 'audio_transcription',
           input_content: file.name,
           result: analysisResult,
           status: 'completed',
+          created_at: new Date().toISOString(),
         });
-
-        if (insertError) throw insertError;
       }
 
       useFeature('audioTranscription');
