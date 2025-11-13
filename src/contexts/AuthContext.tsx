@@ -74,12 +74,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   }
 
+  async function signInWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    const userCredential = await signInWithPopup(auth, provider);
+
+    const docRef = doc(db, 'profiles', userCredential.user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      const profileData: Profile = {
+        id: userCredential.user.uid,
+        email: userCredential.user.email || '',
+        display_name: userCredential.user.displayName || 'User',
+        has_subscription: false,
+        subscription_expires_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      await setDoc(docRef, profileData);
+    }
+  }
+
   async function signOut() {
     await firebaseSignOut(auth);
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );
