@@ -3,6 +3,8 @@ import {
   User,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
   signOut as firebaseSignOut,
   onAuthStateChanged
 } from 'firebase/auth';
@@ -15,9 +17,11 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
 
+const googleProvider = new GoogleAuthProvider();
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -75,23 +79,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signInWithGoogle() {
-    const provider = new GoogleAuthProvider();
-    const userCredential = await signInWithPopup(auth, provider);
+    try {
+      const userCredential = await signInWithPopup(auth, googleProvider);
 
-    const docRef = doc(db, 'profiles', userCredential.user.uid);
-    const docSnap = await getDoc(docRef);
+      const docRef = doc(db, 'profiles', userCredential.user.uid);
+      const docSnap = await getDoc(docRef);
 
-    if (!docSnap.exists()) {
-      const profileData: Profile = {
-        id: userCredential.user.uid,
-        email: userCredential.user.email || '',
-        display_name: userCredential.user.displayName || 'User',
-        has_subscription: false,
-        subscription_expires_at: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      await setDoc(docRef, profileData);
+      if (!docSnap.exists()) {
+        const profileData: Profile = {
+          id: userCredential.user.uid,
+          email: userCredential.user.email || '',
+          display_name: userCredential.user.displayName || 'User',
+          has_subscription: false,
+          subscription_expires_at: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        await setDoc(docRef, profileData);
+      }
+
+      // Espera a que Firebase actualice el estado antes de redirigir
+      await new Promise(resolve => setTimeout(resolve, 500));
+      window.location.href = '/dashboard';
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+      throw error;
     }
   }
 
