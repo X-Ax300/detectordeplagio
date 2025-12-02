@@ -95,6 +95,9 @@ interface Translations {
     original: string;
     summary: string;
     compression: string;
+    characters: string;
+    level: string;
+    PasteArticle: string;
   };
   auth: {
     welcomeBack: string;
@@ -113,6 +116,23 @@ interface Translations {
     creatingAccount: string;
     haveAccount: string;
     continueAsGuest: string;
+    signInWithGoogle: string;
+    orContinueWith: string;
+    enterupassword: string;
+  };
+  PayPal:{
+    PaymentSuccess: string;
+    PaymentError: string;
+    PaymentCancelled: string;
+    PaymentPending: string;
+    callperday: string;
+    fastAnalysis: string;
+    oneTimePayment: string;
+    upgradeToPlus: string;
+    continue: string;
+    cancel: string;
+    youraccount: string;
+    getPlus: string;
   };
   errors: {
     dailyLimit: string;
@@ -173,7 +193,7 @@ const translations: Record<Language, Translations> = {
       resetsDaily: 'Resets daily',
       uploadOrPaste: 'Upload code file or paste code',
       clickToUpload: 'Click to upload code file',
-      supports: 'Supports',
+      supports: 'Supports .py, .js, .java, .cpp, .ts, etc.',
       orPaste: 'Or paste your code here...',
       analyzeButton: 'Analyze Code',
       analyzing: 'Analyzing...',
@@ -215,6 +235,10 @@ const translations: Record<Language, Translations> = {
       original: 'Original',
       summary: 'Summary',
       compression: 'Compression',
+      characters: 'characters',
+      level: 'Level',
+      PasteArticle: 'Paste your article, essay, or notes here...'
+
     },
     auth: {
       welcomeBack: 'Welcome Back',
@@ -233,6 +257,23 @@ const translations: Record<Language, Translations> = {
       creatingAccount: 'Creating account...',
       haveAccount: 'Already have an account? Sign in',
       continueAsGuest: 'Continue as Guest',
+      signInWithGoogle: 'Sign in with Google',
+      orContinueWith: 'Or continue with',
+      enterupassword: 'Enter your password',
+    },
+    PayPal:{
+      PaymentSuccess: 'Payment Success! 🎉',
+      PaymentError: 'Payment Error',
+      PaymentCancelled: 'Payment Cancelled',
+      PaymentPending: 'Payment Pending',
+      callperday: '200 calls per day',
+      fastAnalysis: 'Fast Analysis',
+      oneTimePayment: 'One-time payment of $9.99',
+      upgradeToPlus: 'Upgrade to PlagDetect Plus',
+      continue: 'Continue',
+      cancel: 'Cancel',
+      youraccount: 'Your account is now',
+      getPlus: 'Get Plus',
     },
     errors: {
       dailyLimit: 'Daily limit reached. Sign in for more analyses or upgrade to Premium for unlimited access.',
@@ -291,7 +332,7 @@ const translations: Record<Language, Translations> = {
       resetsDaily: 'Se reinicia diariamente',
       uploadOrPaste: 'Sube archivo de código o pega el código',
       clickToUpload: 'Haz clic para subir archivo de código',
-      supports: 'Soporta',
+      supports: 'Soporta .py, .js, .java, .cpp, .ts, etc.',
       orPaste: 'O pega tu código aquí...',
       analyzeButton: 'Analizar Código',
       analyzing: 'Analizando...',
@@ -333,6 +374,9 @@ const translations: Record<Language, Translations> = {
       original: 'Original',
       summary: 'Resumen',
       compression: 'Compresión',
+      characters: 'caracteres',
+      level: 'Nivel',
+      PasteArticle: 'Pega tu artículo, ensayo o notas aquí...'
     },
     auth: {
       welcomeBack: 'Bienvenido de Nuevo',
@@ -351,6 +395,23 @@ const translations: Record<Language, Translations> = {
       creatingAccount: 'Creando cuenta...',
       haveAccount: '¿Ya tienes cuenta? Inicia sesión',
       continueAsGuest: 'Continuar como Invitado',
+      signInWithGoogle: 'Iniciar sesión con Google',
+      orContinueWith: 'O continuar con',
+      enterupassword: 'Ingrese su contraseña'
+    },
+    PayPal:{
+      PaymentSuccess: 'Pago Completado! 🎉',
+      PaymentError: 'Error al pagar',
+      PaymentCancelled: 'Pago cancelado',
+      PaymentPending: 'Pago pendiente',
+      callperday: '200 llamadas por día',
+      fastAnalysis: 'Análisis rápidos',
+      oneTimePayment: 'Solo $9.99 (pago único)',
+      upgradeToPlus: 'Upgrade to PlagDetect Plus',
+      continue: 'Continuar',
+      cancel: 'Cancelar',
+      youraccount: 'Tu cuenta ahora es',
+      getPlus: 'Obtener Plus',
     },
     errors: {
       dailyLimit: 'Límite diario alcanzado. Inicia sesión para más análisis o actualiza a Premium para acceso ilimitado.',

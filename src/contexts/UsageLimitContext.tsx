@@ -17,17 +17,17 @@ interface UsageLimitContextType {
 }
 
 const GUEST_LIMITS = {
-  textPlagiarism: 100,
-  codePlagiarism: 100,
-  audioTranscription: 100,
-  textSummary: 100,
+  textPlagiarism: 20,
+  codePlagiarism: 20,
+  audioTranscription: 20,
+  textSummary: 20,
 };
 
 const FREE_USER_LIMITS = {
-  textPlagiarism: 100,
-  codePlagiarism: 100,
-  audioTranscription: 100,
-  textSummary: 100,
+  textPlagiarism: 20,
+  codePlagiarism: 20,
+  audioTranscription: 20,
+  textSummary: 20,
 };
 
 const UsageLimitContext = createContext<UsageLimitContextType | undefined>(undefined);

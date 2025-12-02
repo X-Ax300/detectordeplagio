@@ -7,6 +7,8 @@ import { useUsageLimit } from '../../contexts/UsageLimitContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { UsageBanner } from '../UsageBanner';
 
+const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+
 export function TextPlagiarism() {
   const { user } = useAuth();
   const { limits, canUseFeature, useFeature, isUnlimited } = useUsageLimit();
@@ -18,6 +20,84 @@ export function TextPlagiarism() {
 
   const MAX_LENGTH = 2500;
 
+  async function analyzeWithGroq(textContent: string): Promise<any> {
+    if (!GROQ_API_KEY) {
+      throw new Error('Groq API key is not configured. Add VITE_GROQ_API_KEY to .env');
+    }
+
+    const prompt = `You are a plagiarism detection expert. Analyze the following text for potential plagiarism indicators, copied content patterns, and potential sources of similar content.
+
+Text to analyze:
+"${textContent}"
+
+Please provide a JSON response with the following structure:
+{
+  "plagiarismScore": <number between 0-100>,
+  "overallAssessment": "<brief overall assessment>",
+  "matches": [
+    {
+      "text": "<suspicious text segment>",
+      "similarity": <0-100>,
+      "source": "<potential source or type of content>",
+      "reason": "<why this is suspicious>"
+    }
+  ],
+  "patterns": [
+    "<potential plagiarism pattern or indicator>"
+  ],
+  "recommendations": [
+    "<recommendation 1>",
+    "<recommendation 2>"
+  ]
+}
+
+Focus on:
+1. Unusual writing style shifts
+2. Out-of-place technical jargon
+3. Verbatim passages or near-verbatim passages
+4. Paraphrasing patterns
+5. Citation gaps where needed
+6. Structural inconsistencies
+
+Be thorough but realistic - a score of 0% means original content, 100% means completely copied.`;
+
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 1500,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Groq API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    const data = await response.json();
+    const responseText = data.choices[0].message.content;
+
+    // Extraer JSON de la respuesta
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse Groq response');
+    }
+
+    const analysisResult = JSON.parse(jsonMatch[0]);
+    return analysisResult;
+  }
+
   async function handleAnalyze() {
     if (!text.trim()) return;
 
@@ -26,18 +106,26 @@ export function TextPlagiarism() {
       return;
     }
 
+    if (!GROQ_API_KEY) {
+      setError('Groq API key is not configured. Please add VITE_GROQ_API_KEY to your .env file');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setResult(null);
 
     try {
-      const plagiarismScore = Math.floor(Math.random() * 60) + 10;
-      const matches = generateMockMatches(text, plagiarismScore);
+      const analysisData = await analyzeWithGroq(text);
 
       const analysisResult = {
-        plagiarismScore,
-        matches,
+        plagiarismScore: analysisData.plagiarismScore,
+        overallAssessment: analysisData.overallAssessment,
+        matches: analysisData.matches || [],
+        patterns: analysisData.patterns || [],
+        recommendations: analysisData.recommendations || [],
         analyzedAt: new Date().toISOString(),
+        textLength: text.length,
       };
 
       if (user) {
@@ -55,25 +143,24 @@ export function TextPlagiarism() {
       setResult(analysisResult);
     } catch (err: any) {
       setError(err.message || t.errors.failed);
+      console.error('Analysis error:', err);
     } finally {
       setLoading(false);
     }
   }
 
-  function generateMockMatches(text: string, score: number) {
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
-    const numMatches = Math.ceil((score / 100) * sentences.length);
-    const matches = [];
+  function getScoreColor(score: number): string {
+    if (score < 20) return 'text-green-600';
+    if (score < 50) return 'text-yellow-600';
+    if (score < 80) return 'text-orange-600';
+    return 'text-red-600';
+  }
 
-    for (let i = 0; i < Math.min(numMatches, sentences.length); i++) {
-      matches.push({
-        text: sentences[i].trim(),
-        similarity: Math.floor(Math.random() * 30) + 70,
-        source: `Source ${i + 1}`,
-      });
-    }
-
-    return matches;
+  function getScoreBgColor(score: number): string {
+    if (score < 20) return 'from-green-50 to-emerald-50 border-green-200';
+    if (score < 50) return 'from-yellow-50 to-amber-50 border-yellow-200';
+    if (score < 80) return 'from-orange-50 to-red-50 border-orange-200';
+    return 'from-red-50 to-pink-50 border-red-200';
   }
 
   return (
@@ -117,6 +204,7 @@ export function TextPlagiarism() {
             onChange={(e) => setText(e.target.value.slice(0, MAX_LENGTH))}
             className="w-full h-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent resize-none"
             placeholder={t.textPlagiarism.enterText}
+            disabled={loading}
           />
         </div>
 
@@ -125,19 +213,28 @@ export function TextPlagiarism() {
           disabled={loading || !text.trim()}
           className="w-full bg-black text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? t.textPlagiarism.analyzing : t.textPlagiarism.detectButton}
+          {loading ? (
+            <div className="flex items-center justify-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Analyzing with Groq...
+            </div>
+          ) : (
+            t.textPlagiarism.detectButton
+          )}
         </button>
       </div>
 
       {result && (
         <div className="mt-8 space-y-4">
-          <div className="flex items-center justify-between p-6 bg-gray-50 border border-gray-300 rounded-xl">
+          <div className={`flex items-center justify-between p-6 bg-gradient-to-br ${getScoreBgColor(result.plagiarismScore)} rounded-xl border`}>
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-1">{t.textPlagiarism.plagiarismScore}</h3>
-              <p className="text-gray-600 text-sm">{t.textPlagiarism.basedOnAI}</p>
+              <p className="text-gray-600 text-sm">{result.overallAssessment}</p>
             </div>
             <div className="text-right">
-              <div className="text-4xl font-bold text-gray-900">{result.plagiarismScore}%</div>
+              <div className={`text-4xl font-bold ${getScoreColor(result.plagiarismScore)}`}>
+                {result.plagiarismScore}%
+              </div>
               {result.plagiarismScore < 30 ? (
                 <div className="flex items-center gap-1 text-green-600 text-sm mt-1">
                   <CheckCircle className="w-4 h-4" />
@@ -152,7 +249,14 @@ export function TextPlagiarism() {
             </div>
           </div>
 
-          {result.matches.length > 0 && (
+          {result.overallAssessment && (
+            <div className="border border-gray-200 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Analysis</h3>
+              <p className="text-gray-700 text-sm leading-relaxed">{result.overallAssessment}</p>
+            </div>
+          )}
+
+          {result.matches && result.matches.length > 0 && (
             <div className="border border-gray-200 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.textPlagiarism.matchingContent}</h3>
               <div className="space-y-3">
@@ -164,10 +268,43 @@ export function TextPlagiarism() {
                         {match.similarity}% {t.textPlagiarism.similar}
                       </span>
                     </div>
-                    <p className="text-gray-700 text-sm italic">{match.text}</p>
+                    <p className="text-gray-700 text-sm italic mb-2">"{match.text}"</p>
+                    <p className="text-gray-600 text-xs">{match.reason}</p>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {result.patterns && result.patterns.length > 0 && (
+            <div className="border border-blue-200 rounded-xl p-6 bg-blue-50">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Detected Patterns</h3>
+              <ul className="space-y-2">
+                {result.patterns.map((pattern: string, index: number) => (
+                  <li key={index} className="flex items-start gap-3 text-sm text-gray-700">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs mt-0.5">
+                      {index + 1}
+                    </span>
+                    <span>{pattern}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {result.recommendations && result.recommendations.length > 0 && (
+            <div className="border border-purple-200 rounded-xl p-6 bg-purple-50">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Recommendations</h3>
+              <ul className="space-y-2">
+                {result.recommendations.map((rec: string, index: number) => (
+                  <li key={index} className="flex items-start gap-3 text-sm text-gray-700">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs mt-0.5">
+                      ✓
+                    </span>
+                    <span>{rec}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
