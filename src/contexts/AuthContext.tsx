@@ -11,7 +11,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db, Profile } from '../lib/firebase';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
@@ -19,6 +19,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  loadProfile: (userId: string) => Promise<void>; // ← Agregar esto
 }
 
 const googleProvider = new GoogleAuthProvider();
@@ -49,7 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setProfile(docSnap.data() as Profile);
+        const profileData = docSnap.data() as Profile;
+        // Asegura campos legacy/defaults
+        if (!('subscription_type' in profileData) || !profileData.subscription_type) {
+          // set default if missing
+          await setDoc(docRef, { subscription_type: 'free', has_subscription: false }, { merge: true });
+          profileData.subscription_type = 'free';
+          profileData.has_subscription = false;
+        }
+        setProfile(profileData);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -67,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       display_name: displayName,
       has_subscription: false,
       subscription_expires_at: null,
+      subscription_type: 'free', // <- default
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -92,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           display_name: userCredential.user.displayName || 'User',
           has_subscription: false,
           subscription_expires_at: null,
+          subscription_type: 'free', 
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
@@ -112,7 +123,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      loading, 
+      signUp, 
+      signIn, 
+      signInWithGoogle, 
+      signOut,
+      loadProfile, // ← Agregar aquí
+    }}>
       {children}
     </AuthContext.Provider>
   );

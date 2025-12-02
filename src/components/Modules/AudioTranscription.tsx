@@ -5,6 +5,7 @@ import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageLimit } from '../../contexts/UsageLimitContext';
 import { UsageBanner } from '../UsageBanner';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const ASSEMBLYAI_API_KEY = import.meta.env.VITE_ASSEMBLYAI_API_KEY;
 
@@ -12,6 +13,7 @@ export function AudioTranscription() {
   const { user } = useAuth();
   const { limits, canUseFeature, useFeature, isUnlimited } = useUsageLimit();
   const [fileName, setFileName] = useState('');
+  const { t } = useLanguage();
   const [transcription, setTranscription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -178,16 +180,16 @@ export function AudioTranscription() {
             <Mic className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Audio Transcription</h2>
-            <p className="text-gray-600 text-sm">Convert audio files to text</p>
+            <h2 className="text-2xl font-bold text-gray-900">{t.audioTranscription.title}</h2>
+            <p className="text-gray-600 text-sm">{t.audioTranscription.subtitle}</p>
           </div>
         </div>
         {!isUnlimited && (
           <div className="text-right">
             <p className="text-sm font-medium text-gray-900">
-              {limits.audioTranscription} transcriptions left
+              {limits.audioTranscription} {t.audioTranscription.transcriptionsLeft}
             </p>
-            <p className="text-xs text-gray-600">Resets daily</p>
+            <p className="text-xs text-gray-600">{t.audioTranscription.resetsDaily}</p>
           </div>
         )}
       </div>
@@ -206,16 +208,16 @@ export function AudioTranscription() {
             {loading ? (
               <div className="flex flex-col items-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mb-4"></div>
-                <span className="text-gray-600">Transcribing audio...</span>
+                <span className="text-gray-600">{t.audioTranscription.transcribing}</span>
               </div>
             ) : (
               <>
                 <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-lg text-gray-700 font-medium mb-2">
-                  {fileName || 'Upload audio file'}
+                  {fileName || t.audioTranscription.uploadAudio}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Supports MP3, WAV, M4A formats
+                  {t.audioTranscription.supports}
                 </p>
               </>
             )}
@@ -232,7 +234,7 @@ export function AudioTranscription() {
         {transcription && (
           <div className="mt-8 space-y-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Transcription Result</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{t.audioTranscription.transcriptionResult}</h3>
               <div className="flex gap-2">
                 <button
                   onClick={handleCopy}
@@ -241,12 +243,12 @@ export function AudioTranscription() {
                   {copied ? (
                     <>
                       <CheckCircle className="w-4 h-4" />
-                      Copied!
+                      {t.audioTranscription.copied}
                     </>
                   ) : (
                     <>
                       <Copy className="w-4 h-4" />
-                      Copy
+                      {t.audioTranscription.copy}
                     </>
                   )}
                 </button>
@@ -255,7 +257,7 @@ export function AudioTranscription() {
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all text-sm font-medium"
                 >
                   <Download className="w-4 h-4" />
-                  Export .txt
+                  {t.audioTranscription.export}
                 </button>
               </div>
             </div>

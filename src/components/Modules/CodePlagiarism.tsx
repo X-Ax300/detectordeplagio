@@ -5,6 +5,7 @@ import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageLimit } from '../../contexts/UsageLimitContext';
 import { UsageBanner } from '../UsageBanner';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 
@@ -14,6 +15,7 @@ export function CodePlagiarism() {
   const [code, setCode] = useState('');
   const [fileName, setFileName] = useState('');
   const [result, setResult] = useState<any>(null);
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -55,7 +57,7 @@ Focus on:
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
+        Authroization: `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -199,16 +201,16 @@ Focus on:
             <Code2 className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Code Plagiarism Detection</h2>
-            <p className="text-gray-600 text-sm">Analyze code for structural similarities using AI</p>
+            <h2 className="text-2xl font-bold text-gray-900">{t.codePlagiarism.title}</h2>
+            <p className="text-gray-600 text-sm">{t.codePlagiarism.subtitle}</p>
           </div>
         </div>
         {!isUnlimited && (
           <div className="text-right">
             <p className="text-sm font-medium text-gray-900">
-              {limits.codePlagiarism} analyses left
+              {limits.codePlagiarism} {t.codePlagiarism.analysesLeft}
             </p>
-            <p className="text-xs text-gray-600">Resets daily</p>
+            <p className="text-xs text-gray-600">{t.codePlagiarism.resetsDaily}</p>
           </div>
         )}
       </div>
@@ -225,17 +227,17 @@ Focus on:
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Upload code file or paste code
+            {t.codePlagiarism.uploadOrPaste}
           </label>
           <div className="flex gap-3 mb-3">
             <label className="flex-1 cursor-pointer">
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-emerald-500 transition-all text-center">
                 <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <span className="text-sm text-gray-600">
-                  {fileName || 'Click to upload code file'}
-                </span>
+                <p className="text-sm text-gray-600">
+                  {fileName || t.codePlagiarism.clickToUpload}
+                </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Supports .py, .js, .java, .cpp, .ts, etc.
+                  {t.codePlagiarism.supports}
                 </p>
               </div>
               <input
@@ -251,7 +253,7 @@ Focus on:
             value={code}
             onChange={(e) => setCode(e.target.value)}
             className="w-full h-64 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none font-mono text-sm"
-            placeholder="Or paste your code here..."
+            placeholder={t.codePlagiarism.orPaste}
             disabled={loading}
           />
         </div>
@@ -264,10 +266,10 @@ Focus on:
           {loading ? (
             <div className="flex items-center justify-center gap-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Analyzing with Groq AI...
+              {t.codePlagiarism.analyzing}
             </div>
           ) : (
-            'Analyze Code'
+          t.codePlagiarism.analyzeButton
           )}
         </button>
       </div>
@@ -276,7 +278,7 @@ Focus on:
         <div className="mt-8 space-y-4">
           <div className={`flex items-center justify-between p-6 bg-gradient-to-br ${getScoreBgColor(result.plagiarismScore)} rounded-xl border`}>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">Plagiarism Score</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">{t.textPlagiarism.plagiarismScore}</h3>
               <p className="text-gray-600 text-sm">Language: {result.language} | Size: {result.codeLength} bytes</p>
             </div>
             <div className="text-right">
@@ -285,7 +287,7 @@ Focus on:
               </div>
               <div className="flex items-center gap-1 text-gray-600 text-sm mt-1">
                 <FileCode className="w-4 h-4" />
-                <span>{result.patterns.length} patterns found</span>
+                <span>{result.patterns.length} {t.codePlagiarism.patternsFound}</span>
               </div>
             </div>
           </div>
@@ -299,7 +301,7 @@ Focus on:
 
           {result.patterns.length > 0 && (
             <div className="border border-gray-200 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Detected Patterns</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{t.codePlagiarism.detectedPatterns}</h3>
               <div className="space-y-3">
                 {result.patterns.map((pattern: any, index: number) => (
                   <div key={index} className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg p-4">

@@ -5,6 +5,7 @@ import { db } from '../../lib/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUsageLimit } from '../../contexts/UsageLimitContext';
 import { UsageBanner } from '../UsageBanner';
+import { useLanguage } from '../../contexts/LanguageContext'; 
 
 type SummaryLength = 'short' | 'medium' | 'long';
 
@@ -16,6 +17,7 @@ export function TextSummarizer() {
   const [text, setText] = useState('');
   const [summaryLength, setSummaryLength] = useState<SummaryLength>('medium');
   const [summary, setSummary] = useState('');
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -120,9 +122,9 @@ Provide only the summary, no additional commentary or explanations.`;
   }
 
   const lengthOptions = [
-    { value: 'short' as SummaryLength, label: 'Short', description: 'Quick overview' },
-    { value: 'medium' as SummaryLength, label: 'Medium', description: 'Balanced summary' },
-    { value: 'long' as SummaryLength, label: 'Long', description: 'Detailed summary' },
+    { value: 'short' as SummaryLength, label: t.textSummarizer.short, description: t.textSummarizer.shortDesc },
+    { value: 'medium' as SummaryLength, label: t.textSummarizer.medium, description: t.textSummarizer.mediumDesc },
+    { value: 'long' as SummaryLength, label: t.textSummarizer.long, description: t.textSummarizer.longDesc },
   ];
 
   return (
@@ -133,16 +135,16 @@ Provide only the summary, no additional commentary or explanations.`;
             <FileText className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Text Summarizer</h2>
-            <p className="text-gray-600 text-sm">Generate AI-powered summaries</p>
+            <h2 className="text-2xl font-bold text-gray-900">{t.textSummarizer.title}</h2>
+            <p className="text-gray-600 text-sm">{t.textSummarizer.subtitle}</p>
           </div>
         </div>
         {!isUnlimited && (
           <div className="text-right">
             <p className="text-sm font-medium text-gray-900">
-              {limits.textSummary} summaries left
+              {limits.textSummary} {t.textSummarizer.summariesLeft}
             </p>
-            <p className="text-xs text-gray-600">Resets daily</p>
+            <p className="text-xs text-gray-600">{t.textSummarizer.resetsDaily}</p>
           </div>
         )}
       </div>
@@ -159,21 +161,21 @@ Provide only the summary, no additional commentary or explanations.`;
       <div className="space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Text to summarize
+            {t.textSummarizer.textToSummarize}
           </label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             className="w-full h-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-            placeholder="Paste your article, essay, or notes here..."
+            placeholder={t.textSummarizer.PasteArticle}
             disabled={loading}
           />
-          <p className="text-xs text-gray-500 mt-1">{text.length} characters</p>
+          <p className="text-xs text-gray-500 mt-1">{text.length} {t.textSummarizer.characters}</p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
-            Summary length
+            {t.textSummarizer.summaryLength}
           </label>
           <div className="grid grid-cols-3 gap-3">
             {lengthOptions.map((option) => (
@@ -202,12 +204,12 @@ Provide only the summary, no additional commentary or explanations.`;
           {loading ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Generating with Groq...
+              {t.textSummarizer.generating}
             </>
           ) : (
             <>
               <Sparkles className="w-5 h-5" />
-              Generate Summary
+              {t.textSummarizer.generateButton}
             </>
           )}
         </button>
@@ -217,16 +219,16 @@ Provide only the summary, no additional commentary or explanations.`;
         <div className="mt-8 space-y-4">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-orange-600" />
-            <h3 className="text-lg font-semibold text-gray-900">Summary Result</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t.textSummarizer.summaryResult}</h3>
           </div>
 
           <div className="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200 rounded-xl p-6">
             <p className="text-gray-800 leading-relaxed mb-4">{summary}</p>
             <div className="flex gap-4 text-sm text-gray-600 pt-4 border-t border-orange-200 flex-wrap">
-              <span>📄 Original: <strong>{text.length}</strong> characters</span>
-              <span>✂️ Summary: <strong>{summary.length}</strong> characters</span>
-              <span>📊 Compression: <strong>{((1 - summary.length / text.length) * 100).toFixed(1)}%</strong></span>
-              <span>📌 Level: <strong>{summaryLength.charAt(0).toUpperCase() + summaryLength.slice(1)}</strong></span>
+              <span>📄 {t.textSummarizer.original}: <strong>{text.length}</strong> {t.textSummarizer.characters}</span>
+              <span>✂️ {t.textSummarizer.summary}: <strong>{summary.length}</strong> {t.textSummarizer.characters}</span>
+              <span>📊 {t.textSummarizer.compression}: <strong>{((1 - summary.length / text.length) * 100).toFixed(1)}%</strong></span>
+              <span>📌 {t.textSummarizer.level}: <strong>{summaryLength.charAt(0).toUpperCase() + summaryLength.slice(1)}</strong></span>
             </div>
           </div>
         </div>
@@ -234,3 +236,5 @@ Provide only the summary, no additional commentary or explanations.`;
     </div>
   );
 }
+
+
