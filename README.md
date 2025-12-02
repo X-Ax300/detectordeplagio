@@ -305,7 +305,7 @@ R: Sí, edita `src/services/aiService.ts` y cambia la URL y modelo.
 
 ## 📄 Licencia
 
-MIT License - Proyecto de código abierto
+- Proyecto de código abierto - Ax
 
 ---
 
@@ -397,7 +397,7 @@ vercel
 
 ## 📄 License
 
-MIT License
+- Open source project - Ax
 
 ---
 
