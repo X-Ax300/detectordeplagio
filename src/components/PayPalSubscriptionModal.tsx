@@ -10,7 +10,10 @@ export function PayPalSubscriptionModal({ open, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-lg relative">
+      
+      {/* MODAL CON SCROLL INTERNO */}
+      <div className="bg-white rounded-xl w-full max-w-md shadow-lg relative 
+                      max-h-[80vh] overflow-y-auto p-6">
 
         {/* MODAL DE ÉXITO */}
         {paymentSuccess ? (
@@ -36,12 +39,12 @@ export function PayPalSubscriptionModal({ open, onClose, onSuccess }) {
           <>
             <h2 className="text-xl font-bold mb-2">{t.PayPal.upgradeToPlus}</h2>
             <p className="text-gray-600 mb-4">
-              • {t.PayPal.callperday} <br/>
-              • {t.PayPal.fastAnalysis} <br/>
-              • {t.PayPal.oneTimePayment} <br/>
+              • {t.PayPal.callperday} <br />
+              • {t.PayPal.fastAnalysis} <br />
+              • {t.PayPal.oneTimePayment} <br />
             </p>
 
-            {/* BOTONES DE PAYPAL */}
+            {/* PAYPAL BUTTONS */}
             <PayPalButtons
               style={{
                 layout: "vertical",
@@ -52,19 +55,14 @@ export function PayPalSubscriptionModal({ open, onClose, onSuccess }) {
               createOrder={(data, actions) => {
                 return actions.order.create({
                   purchase_units: [
-                    {
-                      amount: {
-                        value: "9.99",
-                      },
-                    },
+                    { amount: { value: "9.99" } }
                   ],
                 });
               }}
               onApprove={async (data, actions) => {
                 await actions.order.capture();
-
-                setPaymentSuccess(true);      
-                onSuccess?.();                
+                setPaymentSuccess(true);
+                onSuccess?.();
               }}
               onError={(err) => {
                 console.error("PayPal Error:", err);
